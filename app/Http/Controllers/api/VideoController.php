@@ -9,11 +9,29 @@ use Illuminate\Http\Request;
 class VideoController extends Controller
 {
 
+    public function searchVideosByTitle()
+    {
+        try {
+            $title = request('search');
+            $videos = Video::where('title', 'like', "%$title%")->get();
+
+            if ($videos->isEmpty()) {
+                return response()->json(['error' => 'Nenhum vídeo encontrado'], 404);
+            }
+
+            return response()->json(compact('videos'), 200);
+        } catch (\Throwable $th) {
+            return response()->json($th, 400);
+        }
+    }
+
+
     public function index ()
     {
         $videos = Video::all();
+        $response = compact('videos');
 
-        return response()->json($videos, 200);
+        return response()->json($response, 200);
     }
 
     public function create ()
@@ -25,23 +43,43 @@ class VideoController extends Controller
     {
         try {
             $messages = [
-                'required' => "O campo Title, Description, URL  é obrigatório",
+                'required' => "O campo Title, Description, URL, category_id é obrigatório",
             ];
-            $validade = $request->validate([
+
+            $jsonData = json_decode($request->getContent(), true);
+            $videoData = $jsonData['videos'];
+
+            $validator = validator($videoData, [
                 'title' => 'required',
                 'url' => 'required',
                 'description' => 'required',
-
+                'category_id' => 'sometimes|exists:categories,id',
             ], $messages);
 
-            $newVideo = Video::create($validade);
+            // Verifica se a validação falhou
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 400);
+            }
+
+            $validateData = $validator->validate();
+
+            if (!isset($validateData['category_id'])) {
+                $validateData['category_id'] = 1;
+            }
+
+            $newVideo = Video::create($validateData);
+
+            $response = [
+                'videos' => $newVideo
+            ];
 
         } catch (\Throwable $th) {
             return response()->json($th, 400);
         }
 
-        return response()->json($newVideo, 201);
+        return response()->json($response, 201);
     }
+
 
     public function show (string $id)
     {
