@@ -9,11 +9,10 @@ use Illuminate\Http\Request;
 class VideoController extends Controller
 {
 
-    public function searchVideosByTitle()
+    public function searchVideosByTitle($search)
     {
         try {
-            $title = request('search');
-            $videos = Video::where('title', 'like', "%$title%")->get();
+            $videos = Video::where('title', 'like', "%$search%")->get();
 
             if ($videos->isEmpty()) {
                 return response()->json(['error' => 'Nenhum vídeo encontrado'], 404);
@@ -26,12 +25,12 @@ class VideoController extends Controller
     }
 
 
+
     public function index ()
     {
-        $videos = Video::all();
-        $response = compact('videos');
+        $videos = Video::with('category')->paginate(5);
 
-        return response()->json($response, 200);
+        return response()->json($videos, 200);
     }
 
     public function create ()
@@ -69,15 +68,15 @@ class VideoController extends Controller
 
             $newVideo = Video::create($validateData);
 
-            $response = [
-                'videos' => $newVideo
-            ];
+//            $response = [
+////                'videos' => $newVideo
+//            ];
 
         } catch (\Throwable $th) {
             return response()->json($th, 400);
         }
 
-        return response()->json($response, 201);
+        return response()->json($newVideo, 201);
     }
 
 

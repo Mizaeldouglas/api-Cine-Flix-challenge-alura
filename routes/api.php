@@ -19,7 +19,8 @@ Route::prefix('v1')->group(function () {
     ]);
 
     Route::get('categorias/{id}/videos', [CategoryController::class, 'videosPorCategoria']);
-    Route::get('videos', [VideoController::class, 'searchVideosByTitle']);
+    Route::get('videos/search/{search}', [VideoController::class, 'searchVideosByTitle']);
+
 
 
 });
